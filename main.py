@@ -4,7 +4,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram import Bot, Dispatcher, executor
-from config import TOKEN
+from config import TOKEN, CHANNEL_ID, USER_ID
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -39,7 +39,7 @@ async def forward_message(message: types.Message):
         types.InlineKeyboardButton(text="Delete", callback_data=f"delete:{message.message_id}")
     )
     author_info = f"\n\nAuthor: @{message.from_user.username}" if message.from_user.username else "\n\nAuthor: @empty"
-    await bot.send_message(chat_id=127481328, text=message.text + author_info, reply_markup=inline_kb, disable_notification=True)
+    await bot.send_message(chat_id=USER_ID, text=message.text + author_info, reply_markup=inline_kb, disable_notification=True)
     await bot.send_message(chat_id=message.chat.id, text="Your message has been delivered", reply_markup=main_button)
 
 async def forward_media_with_caption(message: types.Message):
@@ -52,7 +52,7 @@ async def forward_media_with_caption(message: types.Message):
             types.InlineKeyboardButton(text="Approve", callback_data=f"approve:{message.message_id}"),
             types.InlineKeyboardButton(text="Delete", callback_data=f"delete:{message.message_id}")
         )
-        await bot.send_photo(chat_id=127481328, photo=media_content, caption=caption + author_info, reply_markup=inline_kb, disable_notification=True)
+        await bot.send_photo(chat_id=USER_ID, photo=media_content, caption=caption + author_info, reply_markup=inline_kb, disable_notification=True)
         await bot.send_message(chat_id=message.chat.id, text="Your message has been delivered", reply_markup=main_button)
     elif message.content_type == types.ContentType.VIDEO:
         media_content = message.video.file_id
@@ -61,7 +61,7 @@ async def forward_media_with_caption(message: types.Message):
             types.InlineKeyboardButton(text="Approve", callback_data=f"approve:{message.message_id}"),
             types.InlineKeyboardButton(text="Delete", callback_data=f"delete:{message.message_id}")
         )
-        await bot.send_video(chat_id=127481328, video=media_content, caption=caption + author_info, reply_markup=inline_kb, disable_notification=True)
+        await bot.send_video(chat_id=USER_ID, video=media_content, caption=caption + author_info, reply_markup=inline_kb, disable_notification=True)
         await bot.send_message(chat_id=message.chat.id, text="Your message has been delivered", reply_markup=main_button)
     elif message.content_type == types.ContentType.TEXT:
         # Send the text message directly to the target channel without forwarding
@@ -70,7 +70,7 @@ async def forward_media_with_caption(message: types.Message):
             types.InlineKeyboardButton(text="Approve", callback_data=f"approve:{message.message_id}"),
             types.InlineKeyboardButton(text="Delete", callback_data=f"delete:{message.message_id}")
         )
-        await bot.copy_message(chat_id=-1002078750067, from_chat_id=message.chat.id, message_id=message.message_id, reply_markup=inline_kb, disable_notification=True)
+        await bot.copy_message(chat_id=CHANNEL_ID, from_chat_id=message.chat.id, message_id=message.message_id, reply_markup=inline_kb, disable_notification=True)
         await bot.send_message(chat_id=message.chat.id, text="Your message has been delivered", reply_markup=main_button)
 
 @dp.message_handler(content_types=[types.ContentType.PHOTO, types.ContentType.VIDEO, types.ContentType.TEXT], state=SendMessage.waiting_for_data)
@@ -124,21 +124,21 @@ async def handle_inline_button(callback_query: types.CallbackQuery):
             cleaned_text = re.sub(r"Author: @\w+", "", message.caption)
             # Send media with caption
             if message.photo:
-                await bot.send_photo(chat_id=-1002078750067, photo=message.photo[-1].file_id, caption=cleaned_text)
+                await bot.send_photo(chat_id=CHANNEL_ID, photo=message.photo[-1].file_id, caption=cleaned_text)
             elif message.video:
-                await bot.send_video(chat_id=-1002078750067, video=message.video.file_id, caption=cleaned_text)
+                await bot.send_video(chat_id=CHANNEL_ID, video=message.video.file_id, caption=cleaned_text)
             elif message.text:
                 cleaned_only_text1 = re.sub(r"Author: @\w+", "", message.text)
-                await bot.send_message(chat_id=-1002078750067, text=cleaned_only_text1)
+                await bot.send_message(chat_id=CHANNEL_ID, text=cleaned_only_text1)
         else:
             # Send media without caption
             if message.photo:
-                await bot.send_photo(chat_id=-1002078750067, photo=message.photo[-1].file_id)
+                await bot.send_photo(chat_id=CHANNEL_ID, photo=message.photo[-1].file_id)
             elif message.video:
-                await bot.send_video(chat_id=-1002078750067, video=message.video.file_id)
+                await bot.send_video(chat_id=CHANNEL_ID, video=message.video.file_id)
             elif message.text:
                 cleaned_only_text2 = re.sub(r"\n\nAuthor: @\w+", "", message.text)
-                await bot.send_message(chat_id=-1002078750067, text=cleaned_only_text2)
+                await bot.send_message(chat_id=CHANNEL_ID, text=cleaned_only_text2)
         
         # Notify user and delete messages
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
